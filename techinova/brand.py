@@ -78,4 +78,26 @@ pathlib.Path("flutter/assets/icon.svg").write_text(
     f'<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="256" height="256" viewBox="0 0 256 256">'
     f'<image width="256" height="256" xlink:href="data:image/png;base64,{png}"/></svg>\n', encoding="utf-8")
 print("ok  icone flutter/assets/icon.svg")
+
+# 5) modo "somente receber" (o cliente nao oferece controle remoto) e rede escondida (servidor ja vem embutido)
+troca(cfg, 'pub static ref HARD_SETTINGS: RwLock<HashMap<String, String>> = Default::default();',
+      'pub static ref HARD_SETTINGS: RwLock<HashMap<String, String>> = RwLock::new(HashMap::from([("conn-type".to_owned(), "incoming".to_owned())]));')
+troca(cfg, 'pub static ref BUILTIN_SETTINGS: RwLock<HashMap<String, String>> = Default::default();',
+      'pub static ref BUILTIN_SETTINGS: RwLock<HashMap<String, String>> = RwLock::new(HashMap::from([("hide-network-settings".to_owned(), "Y".to_owned()), ("hide-server-settings".to_owned(), "Y".to_owned()), ("hide-proxy-settings".to_owned(), "Y".to_owned()), ("hide-websocket-settings".to_owned(), "Y".to_owned())]));')
+
+# 6) cores da TechInova (BRAND.md): laranja FF6900, laranja escuro CC5400
+LARANJA, LARANJA_ESC = "FF6900", "CC5400"
+cd = "flutter/lib/common.dart"
+troca(cd, "static const Color accent = Color(0xFF0071FF);", f"static const Color accent = Color(0xFF{LARANJA});")
+troca(cd, "static const Color accent50 = Color(0x770071FF);", f"static const Color accent50 = Color(0x77{LARANJA});")
+troca(cd, "static const Color accent80 = Color(0xAA0071FF);", f"static const Color accent80 = Color(0xAA{LARANJA});")
+troca(cd, "static const Color idColor = Color(0xFF00B6F0);", f"static const Color idColor = Color(0xFF{LARANJA_ESC});")
+troca(cd, "static const Color button = Color(0xFF2C8CFF);", f"static const Color button = Color(0xFF{LARANJA});")
+troca(cd, "  return Color(0xFF2C8CFF);\n}", f"  return Color(0xFF{LARANJA});\n}}")
+troca(cd, "primary: Colors.blue, secondary: accent, background: grayBg)", f"primary: Color(0xFF{LARANJA}), secondary: accent, background: grayBg)")
+troca(cd, "      primary: Colors.blue,\n      secondary: accent,", f"      primary: Color(0xFF{LARANJA}),\n      secondary: accent,")
+troca(cd, "        color: Colors.blue,\n        decoration: TextDecoration.underline,", f"        color: Color(0xFF{LARANJA}),\n        decoration: TextDecoration.underline,")
+troca("flutter/lib/desktop/pages/server_page.dart", "Color(0xff0071ff)", f"Color(0xff{LARANJA.lower()})")
+troca("flutter/lib/desktop/pages/desktop_setting_page.dart", "Color(0xFF2c8cff)", f"Color(0xFF{LARANJA.lower()})")
+
 print("\nMarca da TechInova aplicada.")
