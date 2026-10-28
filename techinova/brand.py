@@ -100,4 +100,28 @@ troca(cd, "        color: Colors.blue,\n        decoration: TextDecoration.under
 troca("flutter/lib/desktop/pages/server_page.dart", "Color(0xff0071ff)", f"Color(0xff{LARANJA.lower()})")
 troca("flutter/lib/desktop/pages/desktop_setting_page.dart", "Color(0xFF2c8cff)", f"Color(0xFF{LARANJA.lower()})")
 
+
+# 7) terceira versao (decisoes do Dann em 28/10/2026): so portatil, aceitar com clique, logo no topo,
+#    "Precisa de ajuda?" abrindo o WhatsApp do suporte e texto da tela orientando o cliente. O tema segue o Windows.
+WHATS = "5519996048421"   # celular corporativo do suporte
+troca(cfg, '("conn-type".to_owned(), "incoming".to_owned())]));',
+      '("conn-type".to_owned(), "incoming".to_owned()), ("disable-installation".to_owned(), "Y".to_owned())]));')
+troca(cfg, 'pub static ref OVERWRITE_SETTINGS: RwLock<HashMap<String, String>> = Default::default();',
+      'pub static ref OVERWRITE_SETTINGS: RwLock<HashMap<String, String>> = RwLock::new(HashMap::from([("approve-mode".to_owned(), "click".to_owned())]));')
+for nome in ("logo_dark.png", "logo_light.png"):
+    shutil.copyfile(ICONES / nome, f"flutter/assets/{nome}"); print(f"ok  logo flutter/assets/{nome}")
+troca(cd, "launchUrl(Uri.parse('https://rustdesk.com'));\n      },\n      child: Opacity(\n          opacity: 0.5,",
+      "launchUrl(Uri.parse('https://wa.me/" + WHATS + "?text=Ol%C3%A1%2C%20preciso%20de%20ajuda%20da%20TechInova'));\n      },\n      child: Opacity(\n          opacity: 1.0,")
+troca(cd, 'translate("powered_by_me"),\n            overflow: TextOverflow.clip,\n            style: Theme.of(context)\n                .textTheme\n                .bodySmall\n                ?.copyWith(fontSize: 9, decoration: TextDecoration.underline),',
+      'translate("powered_by_me"),\n            overflow: TextOverflow.clip,\n            style: Theme.of(context)\n                .textTheme\n                .bodySmall\n                ?.copyWith(fontSize: 11, color: MyTheme.accent, decoration: TextDecoration.underline),')
+textos = {
+    "src/lang/pt_BR.rs": {"powered_by_me": "Precisa de ajuda? Fale com a TechInova pelo WhatsApp",
+                          "desk_tip": "Passe este ID ao técnico da TechInova. Quando ele conectar, clique em Aceitar."},
+    "src/lang/en.rs": {"powered_by_me": "Need help? Talk to TechInova on WhatsApp",
+                       "desk_tip": "Give this ID to the TechInova technician. When they connect, click Accept."},
+}
+for arq, mapa in textos.items():
+    for chave, texto in mapa.items():
+        troca(arq, r'\("' + chave + r'", ".*?"\),', '("' + chave + '", "' + texto + '"),', regex=True)
+
 print("\nMarca da TechInova aplicada.")
