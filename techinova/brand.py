@@ -124,4 +124,14 @@ for arq, mapa in textos.items():
     for chave, texto in mapa.items():
         troca(arq, r'\("' + chave + r'", ".*?"\),', '("' + chave + '", "' + texto + '"),', regex=True)
 
+
+# 8) quarta versao (pedido do Dann em 28/10/2026): o cliente nao abre as configuracoes
+troca(cfg, '("disable-installation".to_owned(), "Y".to_owned())]));',
+      '("disable-installation".to_owned(), "Y".to_owned()), ("disable-settings".to_owned(), "Y".to_owned())]));')
+troca("flutter/lib/desktop/pages/desktop_home_page.dart", "                        buildPopupMenu(context)\n",
+      "                        if (!bind.isDisableSettings()) buildPopupMenu(context)\n")
+troca("flutter/lib/desktop/pages/desktop_tab_page.dart",
+      "      {SettingsTabKey initialPage = SettingsTabKey.general}) {\n    try {",
+      "      {SettingsTabKey initialPage = SettingsTabKey.general}) {\n    if (bind.isDisableSettings()) return;\n    try {")
+
 print("\nMarca da TechInova aplicada.")
