@@ -1,6 +1,8 @@
 name: TechInova - testes rapidos
 on:
   workflow_dispatch:
+permissions:
+  contents: read
 env:
   VERSION: "1.5.3-r6"
 jobs:
@@ -10,6 +12,11 @@ jobs:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
           submodules: recursive
+      - name: Rust 1.75 (o mesmo da compilacao do app)
+        uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
+        with:
+          toolchain: "1.75"
+          targets: x86_64-pc-windows-msvc
       - name: Aplicar a marca
         shell: bash
         run: python3 techinova/brand.py

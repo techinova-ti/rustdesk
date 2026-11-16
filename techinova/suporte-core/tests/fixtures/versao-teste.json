@@ -1,0 +1,8 @@
+{
+  "app": "techinova-suporte-remoto",
+  "canal": "teste",
+  "sha256": "490ba494848b32542fb5b1a9811376928459969859430c6a068da7c1851eb1f7",
+  "tamanho": 17,
+  "url": "https://github.com/techinova-ti/rustdesk/releases/download/canal-teste/TechInova-Suporte-Remoto.exe",
+  "versao": "1.5.3-r7"
+}

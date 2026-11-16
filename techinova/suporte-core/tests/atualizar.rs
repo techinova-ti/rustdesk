@@ -4,6 +4,9 @@ use techinova_suporte::{atualizar::*, instalar::*, Versao};
 const JSON: &[u8] = include_bytes!("fixtures/versao.json");
 const SIG: &[u8] = include_bytes!("fixtures/versao.json.sig");
 const PUB: &str = include_str!("fixtures/chave-teste.pub");
+const JSON_TESTE: &[u8] = include_bytes!("fixtures/versao-teste.json");
+const SIG_TESTE: &[u8] = include_bytes!("fixtures/versao-teste.json.sig");
+const FICHA_TESTE: &str = "https://github.com/techinova-ti/rustdesk/releases/download/canal-teste/versao.json";
 const FICHA: &str = "https://exemplo.invalid/versao.json";
 const EXE_URL: &str =
     "https://github.com/techinova-ti/rustdesk/releases/download/canal-teste/TechInova-Suporte-Remoto.exe";
@@ -120,4 +123,35 @@ fn sem_internet_e_erro_sem_mexer() {
     let p = pasta("h", true);
     assert!(atualizar(&|_, _| Err("sem rede".into()), FICHA, PUB, Versao(1, 5, 3, 6), &p).is_err());
     assert_eq!(fs::read(p.join(NOME_EXE)).unwrap(), b"R6");
+}
+
+#[test]
+fn ficha_de_teste_no_endereco_de_producao_recusa() {
+    let p = pasta("i", true);
+    let mut f = Falso::novo(b"EXE NOVO DE TESTE");
+    f.m.insert(FICHA.to_string(), JSON_TESTE.to_vec());
+    f.m.insert(format!("{FICHA}.sig"), SIG_TESTE.to_vec());
+    assert!(atualizar(&|u, l| f.baixar(u, l), FICHA, PUB, Versao(1, 5, 3, 6), &p).is_err());
+    assert!(!f.pediu_exe());
+}
+
+#[test]
+fn canal_de_teste_aceita_ficha_de_teste() {
+    let p = pasta("j", true);
+    let mut f = Falso::novo(b"EXE NOVO DE TESTE");
+    f.m.insert(FICHA_TESTE.to_string(), JSON_TESTE.to_vec());
+    f.m.insert(format!("{FICHA_TESTE}.sig"), SIG_TESTE.to_vec());
+    let r = atualizar(&|u, l| f.baixar(u, l), FICHA_TESTE, PUB, Versao(1, 5, 3, 6), &p).unwrap();
+    assert_eq!(r, Atualizacao::Atualizado(Versao(1, 5, 3, 7)));
+}
+
+#[test]
+fn troca_interrompida_e_recuperada_antes_de_atualizar() {
+    // queda de energia entre os dois renames: so sobrou o .antigo
+    let p = pasta("k", true);
+    fs::rename(p.join(NOME_EXE), p.join("TechInova-Suporte-Remoto.antigo-123")).unwrap();
+    let f = Falso::novo(b"EXE NOVO DE TESTE");
+    let r = atualizar(&|u, l| f.baixar(u, l), FICHA, PUB, Versao(1, 5, 3, 6), &p).unwrap();
+    assert_eq!(r, Atualizacao::Atualizado(Versao(1, 5, 3, 7)));
+    assert_eq!(fs::read(p.join(NOME_EXE)).unwrap(), b"EXE NOVO DE TESTE");
 }

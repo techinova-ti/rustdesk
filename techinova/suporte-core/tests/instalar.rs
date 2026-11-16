@@ -126,3 +126,77 @@ fn espera_aberto() {
     // Usado por renomeia_exe_aberto: mantem uma copia do binario de teste aberta.
     std::thread::sleep(std::time::Duration::from_secs(15));
 }
+
+#[test]
+fn limpar_restos_recupera_antigo_quando_falta_o_exe() {
+    let d = tmp("i");
+    fs::write(d.join("TechInova-Suporte-Remoto.antigo-123"), b"BOM").unwrap();
+    fs::write(d.join("TechInova-Suporte-Remoto.exe.novo-123"), b"PELA METADE").unwrap();
+    limpar_restos(&d);
+    assert_eq!(fs::read(d.join(NOME_EXE)).unwrap(), b"BOM");
+    assert!(restos(&d).is_empty());
+}
+
+#[test]
+fn copia_de_downloads_com_pasta_so_com_antigo_nao_perde_a_versao_boa() {
+    let d = tmp("j");
+    let pasta = d.join("Suporte");
+    fs::create_dir_all(&pasta).unwrap();
+    fs::write(pasta.join("TechInova-Suporte-Remoto.antigo-123"), b"R7").unwrap();
+    gravar_versao(&pasta, Versao(1, 5, 3, 7)).unwrap();
+    let velho = d.join("velho.exe");
+    fs::write(&velho, b"R6").unwrap();
+    assert_eq!(instalar_em_pasta(&velho, &pasta, Versao(1, 5, 3, 6)).unwrap(), Instalacao::JaAtual);
+    assert_eq!(fs::read(pasta.join(NOME_EXE)).unwrap(), b"R7");
+}
+
+#[cfg(windows)]
+#[test]
+fn copia_sem_a_marca_de_baixado_da_internet() {
+    let d = tmp("k");
+    let origem = d.join("baixado.exe");
+    fs::write(&origem, b"R6").unwrap();
+    fs::write(format!("{}:Zone.Identifier", origem.display()), b"[ZoneTransfer]\r\nZoneId=3\r\n").unwrap();
+    assert!(fs::metadata(format!("{}:Zone.Identifier", origem.display())).is_ok());
+    let pasta = d.join("Suporte");
+    instalar_em_pasta(&origem, &pasta, Versao(1, 5, 3, 6)).unwrap();
+    assert!(fs::metadata(format!("{}:Zone.Identifier", pasta.join(NOME_EXE).display())).is_err());
+}
+
+#[cfg(windows)]
+fn icacls(p: &std::path::Path) -> String {
+    let o = std::process::Command::new("icacls").arg(p).output().unwrap();
+    String::from_utf8_lossy(&o.stdout).to_string()
+}
+
+#[cfg(windows)]
+#[test]
+fn pasta_criada_pelo_app_fica_protegida() {
+    let d = tmp("l");
+    let origem = d.join("baixado.exe");
+    fs::write(&origem, b"R6").unwrap();
+    let pasta = d.join("Suporte");
+    assert_eq!(instalar_em_pasta(&origem, &pasta, Versao(1, 5, 3, 6)).unwrap(), Instalacao::Copiado);
+    let a = icacls(&pasta);
+    assert!(a.contains("BUILTIN\\Users:(OI)(CI)(RX)"), "{a}");
+    assert!(a.contains("OWNER RIGHTS:(OI)(CI)(M)"), "{a}");
+    assert!(!a.contains("Authenticated Users"), "{a}");
+    assert!(!a.contains("(I)"), "nada herdado: {a}");
+    // o proprio usuario continua conseguindo atualizar
+    let novo = d.join("novo.exe");
+    fs::write(&novo, b"R7").unwrap();
+    assert_eq!(instalar_em_pasta(&novo, &pasta, Versao(1, 5, 3, 7)).unwrap(), Instalacao::Copiado);
+}
+
+#[cfg(windows)]
+#[test]
+fn pasta_que_ja_existia_nao_tem_permissao_alterada() {
+    let d = tmp("m");
+    let pasta = d.join("Suporte");
+    fs::create_dir_all(&pasta).unwrap();
+    let antes = icacls(&pasta);
+    let origem = d.join("baixado.exe");
+    fs::write(&origem, b"R6").unwrap();
+    instalar_em_pasta(&origem, &pasta, Versao(1, 5, 3, 6)).unwrap();
+    assert_eq!(icacls(&pasta), antes);
+}
