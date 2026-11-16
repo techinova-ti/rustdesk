@@ -535,4 +535,8 @@ troca1(sp, "  buildDisconnected(BuildContext context) {\n    return Row(\n      
   }
 """)
 
+# 10) r6 (16/11/2026): pasta C:\Suporte, atalho e atualizacao assinada. Codigo em techinova/suporte-core.
+# 10a) o crate entra no workspace
+troca1("Cargo.toml", 'members = ["libs/scrap",', 'members = ["techinova/suporte-core", "libs/scrap",')
+
 print("\nMarca da TechInova aplicada.")

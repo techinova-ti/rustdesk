@@ -1,0 +1,16 @@
+name: TechInova - testes rapidos
+on:
+  workflow_dispatch:
+jobs:
+  testes:
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          submodules: recursive
+      - name: Aplicar a marca
+        shell: bash
+        run: python3 techinova/brand.py
+      - name: Testes do suporte-core
+        shell: bash
+        run: cargo test -p techinova-suporte -- --test-threads=1
