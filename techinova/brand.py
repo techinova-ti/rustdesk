@@ -539,4 +539,35 @@ troca1(sp, "  buildDisconnected(BuildContext context) {\n    return Row(\n      
 # 10a) o crate entra no workspace
 troca1("Cargo.toml", 'members = ["libs/scrap",', 'members = ["techinova/suporte-core", "libs/scrap",')
 
+# 10b) dependencia do crate no app e no pacote
+troca1("Cargo.toml", "[dependencies]\n", '[dependencies]\ntechinova-suporte = { path = "techinova/suporte-core" }\n')
+troca1("libs/portable/Cargo.toml", "[dependencies]\n", '[dependencies]\ntechinova-suporte = { path = "../../techinova/suporte-core" }\n')
+# 10c) modulo do app e inicio da atualizacao quando a interface abre
+troca1("src/lib.rs", "pub mod core_main;\n", "pub mod core_main;\n#[cfg(windows)]\nmod techinova_atualizar;\n")
+troca1("src/core_main.rs",
+       "    if args.is_empty() || crate::common::is_empty_uni_link(&args[0]) {\n",
+       "    if args.is_empty() || crate::common::is_empty_uni_link(&args[0]) {\n"
+       "        #[cfg(windows)]\n        crate::techinova_atualizar::iniciar();\n")
+# 10d) pacote: depois de abrir o app, copia para C:\Suporte e cria o atalho (so na abertura normal, sem argumentos)
+troca1("libs/portable/src/main.rs", "    let mut ui = false;\n",
+       "    let techinova_abertura_normal = args.is_empty();\n    let mut ui = false;\n")
+troca1("libs/portable/src/main.rs", "        execute(exe, args, ui);\n",
+       "        execute(exe, args, ui);\n"
+       "        #[cfg(windows)]\n"
+       "        if techinova_abertura_normal {\n"
+       "            if let Err(e) = techinova_suporte::primeira_execucao() {\n"
+       "                eprintln!(\"TechInova primeira execucao: {}\", e);\n"
+       "            }\n"
+       "        }\n")
+# 10e) tela principal: linha discreta quando o app ja esta em C:\Suporte (decisao (a) do Dann, 16/11/2026)
+troca1(hp,
+       "              style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.4),\n            ),\n",
+       "              style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.4),\n            ),\n"
+       "          if (Platform.isWindows &&\n"
+       "              File(r'C:\\Suporte\\TechInova-Suporte-Remoto.exe').existsSync())\n"
+       "            Text(\n"
+       "              'Salvo em C:\\\\Suporte, com atalho na área de trabalho',\n"
+       "              style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey),\n"
+       "            ).marginOnly(top: 6),\n")
+
 print("\nMarca da TechInova aplicada.")

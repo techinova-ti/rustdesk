@@ -13,7 +13,7 @@ env:
   FLUTTER_VERSION: "3.24.5"
   VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
   VCPKG_COMMIT_ID: "9e593bb18ea69cc5095e012465dcd675a822ed0d"
-  VERSION: "1.5.0-r5"
+  VERSION: "1.5.3-r6"
   NOME_ARQUIVO: "TechInova-Suporte-Remoto"
 
 jobs:
@@ -89,6 +89,10 @@ jobs:
           toolchain: ${{ env.SCITER_RUST_VERSION }}
           targets: x86_64-pc-windows-msvc
           components: "rustfmt"
+
+      - name: Incluir o crate da TechInova no Cargo.lock (cargo 1.75, sem atualizar os outros)
+        shell: bash
+        run: cargo metadata --format-version 1 > /dev/null && git diff --stat Cargo.lock
 
       - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
         with:
