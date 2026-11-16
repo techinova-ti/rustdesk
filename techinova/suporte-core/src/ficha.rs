@@ -11,6 +11,7 @@ pub const LIMITE_EXE: u64 = 300 * 1024 * 1024;
 #[serde(deny_unknown_fields)]
 pub struct Ficha {
     pub app: String,
+    pub canal: String,
     pub versao: String,
     pub url: String,
     pub sha256: String,
@@ -25,7 +26,13 @@ fn b64(s: &[u8]) -> Result<Vec<u8>, String> {
 }
 
 /// Confere a assinatura ANTES de ler o JSON; depois valida cada campo.
-pub fn verificar(json: &[u8], assinatura_b64: &[u8], chave_publica_b64: &str) -> Result<(Ficha, Versao), String> {
+/// `canal_esperado` ("producao" ou "teste"): uma ficha do canal de teste nunca vale no endereco de producao.
+pub fn verificar(
+    json: &[u8],
+    assinatura_b64: &[u8],
+    chave_publica_b64: &str,
+    canal_esperado: &str,
+) -> Result<(Ficha, Versao), String> {
     let chave = b64(chave_publica_b64.as_bytes())?;
     if chave.len() != 32 {
         return Err("chave publica invalida".into());
@@ -42,6 +49,9 @@ pub fn verificar(json: &[u8], assinatura_b64: &[u8], chave_publica_b64: &str) ->
     let f: Ficha = serde_json::from_slice(json).map_err(|e| format!("ficha invalida: {e}"))?;
     if f.app != APP {
         return Err("ficha de outro aplicativo".into());
+    }
+    if f.canal != canal_esperado {
+        return Err(format!("ficha do canal {}, esperado {}", f.canal, canal_esperado));
     }
     let v = Versao::ler(&f.versao).ok_or("versao invalida na ficha")?;
     if !f.url.starts_with(PREFIXO_URL) || f.url.contains("..") || f.url.contains('?') || f.url.contains('#') {

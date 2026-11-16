@@ -1,5 +1,6 @@
 // TechInova (r6): atualizacao automatica assinada. Logica e testes em techinova/suporte-core.
 // Uma vez por abertura (60 s depois) e a cada 24 h. O arquivo novo vale na proxima abertura.
+use hbb_common::log;
 use std::{io::Read, path::Path, time::Duration};
 
 const CHAVE: &str = include_str!("../techinova/chave-atualizacao.txt");

@@ -1,5 +1,8 @@
 use crate::{ficha, instalar, Versao};
-use std::{fs, path::Path};
+use std::{fs, io::Write, path::Path};
+
+/// Endereco do canal de teste: so a ficha assinada com canal "teste" vale nele.
+pub const MARCA_CANAL_TESTE: &str = "/releases/download/canal-teste/";
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum Atualizacao {
@@ -18,14 +21,15 @@ pub fn atualizar(
     pasta: &Path,
 ) -> Result<Atualizacao, String> {
     let destino = pasta.join(instalar::NOME_EXE);
+    instalar::limpar_restos(pasta); // tambem devolve o .antigo de uma troca interrompida
     if !destino.exists() {
         return Ok(Atualizacao::SemPasta);
     }
-    instalar::limpar_restos(pasta);
+    let canal = if url_ficha.contains(MARCA_CANAL_TESTE) { "teste" } else { "producao" };
     let base = instalar::versao_na_pasta(pasta).map_or(propria, |v| v.max(propria));
     let json = baixar(url_ficha, 64 * 1024)?;
     let sig = baixar(&format!("{url_ficha}.sig"), 1024)?;
-    let (f, nova) = ficha::verificar(&json, &sig, chave_publica_b64)?;
+    let (f, nova) = ficha::verificar(&json, &sig, chave_publica_b64, canal)?;
     if nova <= base {
         return Ok(Atualizacao::JaAtual(base));
     }
@@ -42,7 +46,12 @@ pub fn atualizar(
         return Err("sha256 do download nao confere".into());
     }
     let tmp = pasta.join(format!("{}.novo-{}", instalar::NOME_EXE, std::process::id()));
-    if let Err(e) = fs::write(&tmp, &exe).and_then(|_| instalar::trocar_arquivo(&tmp, &destino)) {
+    let gravar = || -> std::io::Result<()> {
+        let mut a = fs::File::create(&tmp)?;
+        a.write_all(&exe)?;
+        a.sync_all() // conteudo no disco antes do rename (queda de energia)
+    };
+    if let Err(e) = gravar().and_then(|_| instalar::trocar_arquivo(&tmp, &destino)) {
         let _ = fs::remove_file(&tmp);
         return Err(format!("troca falhou: {e}"));
     }
