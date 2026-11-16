@@ -15,4 +15,11 @@ jobs:
         run: python3 techinova/brand.py
       - name: Testes do suporte-core
         shell: bash
-        run: cargo test -p techinova-suporte -- --test-threads=1
+        run: |
+          falhou=0
+          for t in techinova/suporte-core/tests/*.rs; do
+            n=$(basename "$t" .rs)
+            echo "=== TESTE $n ==="
+            if cargo test -p techinova-suporte --test "$n" -- --test-threads=1; then echo "=== OK $n ==="; else echo "=== FALHOU $n ==="; falhou=1; fi
+          done
+          exit $falhou
