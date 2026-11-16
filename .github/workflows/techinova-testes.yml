@@ -1,6 +1,8 @@
 name: TechInova - testes rapidos
 on:
   workflow_dispatch:
+env:
+  VERSION: "1.5.3-r6"
 jobs:
   testes:
     runs-on: windows-2022
